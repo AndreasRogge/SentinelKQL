@@ -1,0 +1,6 @@
+IntuneOperationalLogs 
+| where TimeGenerated >= ago(30d)
+| extend Autopilot = tostring(parse_json(Properties).IsAutopilot)
+| where Autopilot =~ "True"
+| summarize count() by Result
+| render piechart 
