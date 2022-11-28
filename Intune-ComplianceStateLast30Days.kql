@@ -1,0 +1,4 @@
+IntuneDeviceComplianceOrg
+| where TimeGenerated >= ago(30d)
+| summarize count() by ComplianceState, bin(TimeGenerated, 1d)
+| render timechart 
