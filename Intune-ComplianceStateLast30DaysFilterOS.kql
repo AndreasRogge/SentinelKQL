@@ -1,0 +1,6 @@
+let FilterOS = "Windows"; //Possible Windows, iOS, Android,
+IntuneDeviceComplianceOrg
+| where TimeGenerated >= ago(30d)
+| where OSDescription == FilterOS
+| summarize count() by ComplianceState, bin(TimeGenerated, 1d)
+| render timechart 
