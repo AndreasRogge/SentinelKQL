@@ -1,0 +1,8 @@
+IntuneAuditLogs
+| where TimeGenerated >= ago(7d)
+| extend SplitOperationName = split(OperationName, " ")
+| project-away OperationName
+| extend Operation = tostring(SplitOperationName[0]), OperationName = SplitOperationName[1]
+| project-away SplitOperationName
+| summarize count() by Operation
+| render barchart 
