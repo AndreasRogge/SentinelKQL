@@ -1,0 +1,3 @@
+IntuneOperationalLogs 
+| where TimeGenerated >= ago(30d)
+| where OperationName == "Enrollment" and Result == "Fail"
