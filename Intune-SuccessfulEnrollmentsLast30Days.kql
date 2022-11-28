@@ -1,0 +1,6 @@
+IntuneOperationalLogs 
+| where TimeGenerated >= ago(30d)
+| where OperationName == "Enrollment" and Result == "Success"
+| extend DeviceId = tostring(parse_json(Properties).IntuneDeviceId)
+| join kind=leftouter IntuneDevices on DeviceId
+| project DeviceName, DeviceId, UPN, OS, Result, CompliantState, Ownership, Manufacturer, Model, SerialNumber
