@@ -1,0 +1,6 @@
+search *
+| where TimeGenerated > startofday(ago(90d)) and TimeGenerated < startofday(now())
+| where _IsBillable == True ##comment out if all data
+| summarize TotalGB = round(sum(_BilledSize/1000/1000/1000)) by bin(TimeGenerated, 1d)
+//| summarize avg(TotalGB)
+| render timechart 
