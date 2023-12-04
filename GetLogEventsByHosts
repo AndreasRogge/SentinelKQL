@@ -1,0 +1,6 @@
+let Now = now();
+//range TimeGenerated from ago(4h) to Now - 1h step 1h
+Syslog
+| extend sent_by_ama = column_ifexists('CollectorHostName', '')
+| summarize count() by bin_at(TimeGenerated, 1d, Now), sent_by_ama
+| render timechart 
