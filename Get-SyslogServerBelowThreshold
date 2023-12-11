@@ -1,0 +1,16 @@
+let AverageDays = 14d;
+let Lookback = 1d;
+let Threshold = 0.50;
+let WeekAvg = Syslog
+| where TimeGenerated >= ago(AverageDays)
+| summarize count() by CollectorHostName
+| extend WeekAverage = count_ / split(AverageDays, ".")[0]
+| project-away count_;
+Syslog
+| where TimeGenerated >= ago(Lookback)
+| summarize TodayEvents=count() by CollectorHostName
+| join kind=fullouter WeekAvg on CollectorHostName
+| extend PercentOfAvg = toint(round(todouble(TodayEvents) / WeekAverage * 100))
+| project-away CollectorHostName
+| project-rename CollectorHostName=CollectorHostName1
+| where TodayEvents < (WeekAverage * Threshold)
