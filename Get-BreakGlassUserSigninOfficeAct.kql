@@ -1,0 +1,10 @@
+let bGlass = (_GetWatchlist('breakGlass') | project SearchKey);
+SigninLogs
+| project UserId
+| where UserId in (bGlass)
+| extend placeholder=1
+| join kind=fullouter  (
+    OfficeActivity
+    | where UserKey in (bGlass)
+    | extend placeholder=1
+) on placeholder
