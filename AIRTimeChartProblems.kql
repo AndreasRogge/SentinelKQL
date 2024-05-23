@@ -1,0 +1,22 @@
+SecurityIncident  
+| where TimeGenerated >= ago(30d)
+| summarize arg_max(TimeGenerated,*) by IncidentNumber  
+//| extend Alerts = extract("\\[(.*?)\\]", 1, tostring(AlertIds))  
+| mv-expand AlertIds to typeof(string)  
+| join ( SecurityAlert  
+    | extend AIRstatus = parse_json(todynamic(ExtendedProperties))['Status']  
+    | where AIRstatus contains 'Investigation started'
+) on $left.AlertIds == $right.SystemAlertId  
+| project IncidentNumber, IncidentName, SystemAlertId, AIRstatus, TimeGenerated, TenantId
+| join kind = leftanti ( SecurityIncident  
+| summarize arg_max(TimeGenerated,*) by IncidentNumber  
+//| extend Alerts = extract("\\[(.*?)\\]", 1, tostring(AlertIds))  
+| mv-expand AlertIds to typeof(string)  
+| join ( SecurityAlert  
+    | extend AIRstatus = parse_json(todynamic(ExtendedProperties))['Status']  
+    | where AIRstatus in ('Pending Action', 'No threats found', 'Remediated', 'Partialy Remediated', 'Threats found' )
+) on $left.AlertIds == $right.SystemAlertId  
+| project IncidentNumber, IncidentName, SystemAlertId, AIRstatus, TimeGenerated, TenantId) on $left.IncidentNumber == $right.IncidentNumber
+| extend Customer = ResolveWorkspaceId(TenantId)
+| summarize count() by bin(TimeGenerated, 1h), Customer
+| render timechart 

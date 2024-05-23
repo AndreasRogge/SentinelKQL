@@ -1,0 +1,43 @@
+let start = startOfWeek(relativeWeek = -4);
+let end = datetime_add("day", 28, start);
+SecurityIncident
+| extend Owner = parse_json(Owner).assignedTo
+| where Owner startswith "water."
+| where CreatedTime between (start .. end)
+| project
+    Customer=ResolveWorkspaceId(TenantId),
+    IncidentName,
+    IncidentNumber,
+    Title,
+    Severity,
+    Classification,
+    ClassificationComment,
+    Owner,
+    ModifiedBy
+| where Classification != ""
+    and Classification != "Undetermined"
+   and ClassificationComment == ""
+   //and ModifiedBy contains "alert"
+| summarize 
+    IncidentNumber = take_any(IncidentNumber),
+    Title = make_list(Title, 1),
+    ClassificationComment = make_set(ClassificationComment)
+    by
+    Customer,
+    IncidentName
+//| where ClassificationComment == '[""]' or ClassificationComment == "[]" or ClassificationComment == "" or ClassificationComment contains tostring("\"\"") or ClassificationComment endswith '""]'
+//| where IncidentNumber == 555878
+//| extend WordCount = countof(ClassificationComment, " ") + 1
+////| where WordCount == 1
+//| summarize HowOften = count(WordCount) by WordCount
+//| order by WordCount asc
+
+SecurityIncident
+| where TimeGenerated >= ago(30d)
+| where IncidentNumber == 22584
+| project TimeGenerated, IncidentNumber, Status, Classification, ClassificationComment, LastModifiedTime, ModifiedBy, IncidentName
+
+
+//sentinel-sec-prod-eu-001
+AzureActivity
+| search "cbc714b1-c4fb-4fd9-8dfa-c981e8fcdee5"

@@ -1,0 +1,83 @@
+let AppleiCloudPrivateRelayRanges = externaldata(IPRange: string, Country: string, LanguageCode: string, City: string, AddressFamily: string) [
+    @"https://raw.githubusercontent.com/f-bader/AzSentinelQueries/master/ExternalData/iCloudPrivateRelayIPRanges.csv"]
+    with(format="csv", ignoreFirstRecord=true)
+    | summarize IPRange=make_set(IPRange) by AddressFamily;
+let AppleiCloudPrivateRelayRangesIPv4 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetwork"
+    | project IPRange);
+let AppleiCloudPrivateRelayRangesIPv6 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetworkV6"
+    | project IPRange);
+SecurityAlert
+| where TimeGenerated  >= ago(30d)
+| where AlertName  startswith "Anonymous IP address"
+| extend entities = parse_json(todynamic(Entities))
+| mv-expand entities
+| extend EntityType = tostring(entities.Type)
+| where EntityType == "ip"
+| extend IPAddress = tostring(entities.Address)
+| extend IsInAppleiCloudv4Range = ipv4_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv4)
+| extend IsInAppleiCloudv6Range = ipv6_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv6)
+| extend IsInAppleiCloudRange = coalesce(IsInAppleiCloudv4Range, IsInAppleiCloudv6Range)
+| project-away IsInAppleiCloudv4Range, IsInAppleiCloudv6Range
+| summarize count() by bin(TimeGenerated, 1d), IsInAppleiCloudRange
+| render timechart 
+
+
+let AppleiCloudPrivateRelayRanges = externaldata(IPRange: string, Country: string, LanguageCode: string, City: string, AddressFamily: string) [
+    @"https://raw.githubusercontent.com/f-bader/AzSentinelQueries/master/ExternalData/iCloudPrivateRelayIPRanges.csv"]
+    with(format="csv", ignoreFirstRecord=true)
+    | summarize IPRange=make_set(IPRange) by AddressFamily;
+let AppleiCloudPrivateRelayRangesIPv4 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetwork"
+    | project IPRange);
+let AppleiCloudPrivateRelayRangesIPv6 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetworkV6"
+    | project IPRange);
+SecurityAlert
+| where TimeGenerated  >= ago(30d)
+| where AlertName  startswith "Anonymous IP address"
+| extend entities = parse_json(todynamic(Entities))
+| mv-expand entities
+| extend EntityType = tostring(entities.Type)
+| where EntityType == "ip"
+| extend IPAddress = tostring(entities.Address)
+| extend IsInAppleiCloudv4Range = ipv4_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv4)
+| extend IsInAppleiCloudv6Range = ipv6_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv6)
+| extend IsInAppleiCloudRange = coalesce(IsInAppleiCloudv4Range, IsInAppleiCloudv6Range)
+| project-away IsInAppleiCloudv4Range, IsInAppleiCloudv6Range
+| summarize count() by IsInAppleiCloudRange
+
+
+
+let AppleiCloudPrivateRelayRanges = externaldata(IPRange: string, Country: string, LanguageCode: string, City: string, AddressFamily: string) [
+    @"https://raw.githubusercontent.com/f-bader/AzSentinelQueries/master/ExternalData/iCloudPrivateRelayIPRanges.csv"]
+    with(format="csv", ignoreFirstRecord=true)
+    | summarize IPRange=make_set(IPRange) by AddressFamily;
+let AppleiCloudPrivateRelayRangesIPv4 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetwork"
+    | project IPRange);
+let AppleiCloudPrivateRelayRangesIPv6 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetworkV6"
+    | project IPRange);
+print "2a09:bac3:2a10:2c8::47:2e8"
+| project-rename IPAddress = print_0
+| extend IsInAppleiCloudv4Range = ipv4_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv4)
+| extend IsInAppleiCloudv6Range = ipv6_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv6)
+| extend IsInAppleiCloudRange = coalesce(IsInAppleiCloudv4Range, IsInAppleiCloudv6Range)
+| project-away IsInAppleiCloudv4Range, IsInAppleiCloudv6Range
+
+let AppleiCloudPrivateRelayRanges = _GetWatchlist('iCloudPrivateRelayRange')
+| summarize IPRange=make_set(IPRange) by AddressFamily;
+let AppleiCloudPrivateRelayRangesIPv4 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetwork"
+    | project IPRange);
+let AppleiCloudPrivateRelayRangesIPv6 = toscalar(AppleiCloudPrivateRelayRanges
+    | where AddressFamily == "InterNetworkV6"
+    | project IPRange);
+print "2a09:bac3:2a10:2c8::47:2e8"
+| project-rename IPAddress = print_0
+| extend IsInAppleiCloudv4Range = ipv4_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv4)
+| extend IsInAppleiCloudv6Range = ipv6_is_in_any_range(IPAddress, AppleiCloudPrivateRelayRangesIPv6)
+| extend IsInAppleiCloudRange = coalesce(IsInAppleiCloudv4Range, IsInAppleiCloudv6Range)
+| project-away IsInAppleiCloudv4Range, IsInAppleiCloudv6Range

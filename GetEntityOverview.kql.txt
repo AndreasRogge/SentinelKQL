@@ -1,0 +1,34 @@
+let prioEntity = dynamic(['url', 'ip', 'mailMessage', 'file']);
+SecurityAlert
+| where TimeGenerated  >= ago(30d)
+| extend entities = parse_json(todynamic(Entities))
+| mv-expand entities
+| extend EntityType = tostring(entities.Type)
+| extend IPv4 = tostring(entities.Address)
+| extend privateIPv4 = ipv4_is_private(IPv4)
+| where privateIPv4 == "false" or isempty(privateIPv4)
+| where EntityType in~ (prioEntity)
+| summarize count() by EntityType
+
+
+let prioEntity = dynamic(['url', 'ip', 'mailMessage', 'file']);
+SecurityAlert
+| where TimeGenerated  >= ago(4d)
+| extend entities = parse_json(todynamic(Entities))
+| mv-expand entities
+| extend EntityType = tostring(entities.Type)
+| where EntityType in~ (prioEntity)
+| summarize count() by bin(TimeGenerated, 10m), EntityType
+| render timechart 
+
+
+
+let prioEntity = dynamic(['url', 'ip', 'mailMessage', 'file']);
+SecurityAlert
+| where TimeGenerated  >= ago(30d)
+| extend entities = parse_json(todynamic(Entities))
+| mv-expand entities
+| extend EntityType = tostring(entities.Type)
+| where EntityType == "url"
+| distinct tostring(entities.Url)//, entities.FileHashes, entities.Url
+| summarize count()

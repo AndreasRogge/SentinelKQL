@@ -1,0 +1,10 @@
+Usage
+| where StartTime >= startofday(ago(31d)) and EndTime < startofday(now())
+| where IsBillable == true
+| summarize BillableDataGB = sum(Quantity) / 1000. by bin(StartTime, 1d), DataType
+| render columnchart
+
+union * 
+| project Type, billable = _IsBillable, datasize =_BilledSize 
+| summarize totalentries = count(), sum(datasize) by Type, billable 
+| sort by sum_datasize 

@@ -1,0 +1,19 @@
+let incdata = union SecurityIncident,SecurityAlert,DeviceInfo,EmailEvents,EmailUrlInfo,EmailAttachmentInfo,EmailPostDeliveryEvents,CommonSecurityLog,Azure*,AAD*,UrlClickEvents,AlertInfo,AlertEvidence;
+let newest_entry_t = toscalar(incdata | summarize max(TimeGenerated));
+let two_weeks_ago_t = startofday(ago(14d));
+let step_t = 1d;
+let Threshold = 50;//atleast Threshold many entries in step_t time to be possible anomaly
+let k_threshold = 5;//the lower the k_threshold the more anomalies you find
+let trend = 'linefit';//calculation for trend 'linefit' uses linear regresssion 'avg' simply computes average 
+let monitoring = incdata
+| make-series Count1=count() on TimeGenerated from two_weeks_ago_t to newest_entry_t step step_t by Type
+//| where Type == 'EmailPostDeliveryEvents'// if needed can decrease number of Types for visibility
+//|render timechart with(title= "Monitoring",ysplit=panels );monitoring//this render shows timechart of entries 
+;
+let TimeSeriesAlerts=monitoring
+| extend (anomalies, score, baseline) = series_decompose_anomalies(Count1, k_threshold, -1, trend)
+| mv-expand Count1 to typeof(double), TimeGenerated to typeof(datetime), anomalies to typeof(double),score to typeof(double), baseline to typeof(long)
+| where anomalies != 0
+| project Type, TimeGenerated, Count1, baseline, anomalies, score
+| where Count1 > Threshold;
+TimeSeriesAlerts
