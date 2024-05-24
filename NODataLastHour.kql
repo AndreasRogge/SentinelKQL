@@ -1,0 +1,24 @@
+let XDR = union kind=inner SecurityIncident,SecurityAlert,DeviceEvents,DeviceFileEvents,DeviceImageLoadEvents,DeviceInfo,DeviceLogonEvents,DeviceNetworkEvents,DeviceNetworkInfo,DeviceProcessEvents,DeviceRegistryEvents,DeviceFileCertificateInfo,EmailEvents,EmailUrlInfo,EmailAttachmentInfo,EmailPostDeliveryEvents,UrlClickEvents,IdentityLogonEvents,IdentityQueryEvents,IdentityDirectoryEvents,CloudAppEvents,AlertInfo,AlertEvidence;
+let Entra = union kind=inner SigninLogs,AuditLogs,AADNonInteractiveUserSignInLogs,AADServicePrincipalSignInLogs,AADManagedIdentitySignInLogs,AADProvisioningLogs,ADFSSignInLogs,AADUserRiskEvents,AADRiskyUsers,NetworkAccessTraffic,AADRiskyServicePrincipals,AADServicePrincipalRiskEvents,MicrosoftGraphActivityLogs;
+let SyslogData = Syslog
+| where TimeGenerated between (ago(1h) .. now())
+| count 
+| extend Connector="Syslog"
+| where Count == 0;
+let CEFData = CommonSecurityLog
+| where TimeGenerated between (ago(1h) .. now())
+| count 
+| extend Connector="CEF"
+| where Count == 0;
+let XDRData = XDR
+| where TimeGenerated between (ago(1h) .. now())
+| count 
+| extend Connector="XDR"
+| where Count == 0;
+let EntraData = Entra
+| where TimeGenerated between (ago(1h) .. now())
+| count 
+| extend Connector="Entra"
+| where Count == 0;
+EntraData
+| union SyslogData,XDRData,CEFData
