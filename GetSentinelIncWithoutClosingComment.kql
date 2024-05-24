@@ -2,7 +2,7 @@ let start = startOfWeek(relativeWeek = -4);
 let end = datetime_add("day", 28, start);
 SecurityIncident
 | extend Owner = parse_json(Owner).assignedTo
-| where Owner startswith "water."
+| where Owner startswith "[SOCUSername]"
 | where CreatedTime between (start .. end)
 | project
     Customer=ResolveWorkspaceId(TenantId),
@@ -36,8 +36,3 @@ SecurityIncident
 | where TimeGenerated >= ago(30d)
 | where IncidentNumber == 22584
 | project TimeGenerated, IncidentNumber, Status, Classification, ClassificationComment, LastModifiedTime, ModifiedBy, IncidentName
-
-
-//sentinel-sec-prod-eu-001
-AzureActivity
-| search "cbc714b1-c4fb-4fd9-8dfa-c981e8fcdee5"
