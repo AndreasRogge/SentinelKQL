@@ -1,0 +1,24 @@
+let dt_lookBack = 30d;
+let MalUrls = datatable(value: string)
+[
+"https://github.com/microsoft/vcpkg/files/14125503/cheat.lab.2.7.2.zip",
+"https://github.com/microsoft/STL/files/14432565/cheater.pro.1.6.0.zip"
+];
+let MalFiles = datatable(value: string)
+[
+"cheat.lab.2.7.2.zip",
+"cheater.pro.1.6.0.zip"
+];
+DeviceFileEvents
+| where TimeGenerated >= ago(dt_lookBack)
+| where isnotempty(FileOriginUrl)
+| extend FileOriginUrl = tolower(FileOriginUrl)
+| where FileOriginUrl has_any (MalUrls) or FileName has_any (MalFiles)
+
+let dt_lookBack = 10m;
+let MalUrls = datatable(value: string)
+[
+"https://github[dot]com/microsoft/vcpkg/files/14125503/Cheat.Lab.2.7.2.zip",
+"https://github[dot]com/microsoft/STL/files/14432565/Cheater.Pro.1.6.0.zip"
+];
+_Im_WebSession (starttime=ago(dt_lookBack), eventresult='Success', url_has_any=MalUrls)
