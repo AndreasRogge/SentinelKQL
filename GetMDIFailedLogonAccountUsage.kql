@@ -1,0 +1,14 @@
+let startDate = startofday(ago(30d));
+let endDate = startofday(ago(1h));
+let hourlyAverages = IdentityLogonEvents
+| where LogonType == "Failed logon" and FailureReason == "WrongPassword"
+| where TimeGenerated between (startDate .. endDate)
+| summarize Failures=count(), NumAccounts=count_distinct(AccountName) by bin(TimeGenerated, 1h), DeviceName
+| summarize AvgNumAccounts = avg(NumAccounts) by DeviceName;
+let lastHour = IdentityLogonEvents
+| where LogonType == "Failed logon" and FailureReason == "WrongPassword"
+| where TimeGenerated >= ago(1h)
+| summarize Failures=count(), NumAccounts=count_distinct(AccountName), Accounts=make_set(AccountName) by DeviceName;
+hourlyAverages
+| join kind=innerunique (lastHour) on DeviceName
+| where NumAccounts > AvgNumAccounts
