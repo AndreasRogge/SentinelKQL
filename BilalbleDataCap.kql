@@ -1,0 +1,8 @@
+let DailyCapResetHour=12;
+Usage
+| where TimeGenerated > ago(32d)
+| extend StartTime=datetime_add("hour",-1*DailyCapResetHour,StartTime)
+| where StartTime > startofday(ago(31d))
+| where IsBillable
+| summarize IngestedGbBetweenDailyCapResets=sum(Quantity)/1000. by day=bin(StartTime , 1d), DataType // Quantity in units of MB
+| render areachart
