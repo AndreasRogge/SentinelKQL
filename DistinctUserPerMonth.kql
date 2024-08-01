@@ -1,0 +1,18 @@
+SigninLogs
+| where TimeGenerated >= ago(90d)
+| extend Tenant = ResolveWorkspaceId(TenantId)
+| project UserPrincipalName, Tenant, TimeGenerated
+| where isnotempty(UserPrincipalName)
+| where UserPrincipalName contains "@"
+| extend Domain = tostring(split(UserPrincipalName,"@")[-1])
+| summarize AnzahlAccounts = count_distinct(UserPrincipalName) by startofmonth(TimeGenerated), Tenant
+| render timechart
+
+SigninLogs
+| where TimeGenerated >= ago(30d)
+| extend Tenant = ResolveWorkspaceId(TenantId)
+| distinct UserPrincipalName, Tenant
+| where isnotempty(UserPrincipalName)
+| where UserPrincipalName contains "@"
+| extend Domain = tostring(split(UserPrincipalName,"@")[-1])
+| summarize AnzahlAccounts = count(UserPrincipalName) by Tenant

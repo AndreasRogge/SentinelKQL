@@ -1,4 +1,4 @@
-let startDate = startofday(ago(30d));
+let startDate = startofday(ago(14d));
 let endDate = startofday(ago(1d));
 let hourlyAverages = 
 IdentityLogonEvents
@@ -11,8 +11,41 @@ IdentityLogonEvents
 let lastHour = IdentityLogonEvents
 | where FailureReason == "WrongPassword" or FailureReason == "AccountLocked"
 | where TimeGenerated >= ago(1h)
+| where AccountName notcontains "$"
 | summarize Failures=count(), NumAccounts=count_distinct(AccountName), Accounts=make_set(AccountName) by DeviceName
-| where Failures >= 10;
+| where Failures >= 10 and NumAccounts > 1;
 hourlyAverages
 | join kind=innerunique (lastHour) on DeviceName
-| where NumAccounts > AvgNumAccounts10Perc or Failures > AvgFailures10Perc
+| where NumAccounts > AvgNumAccounts10Perc and Failures > AvgFailures10Perc
+//Name: Internal Identity - Failure Logins - Too Many Failed Logons Versus Average
+//Severity: Normal
+//Handling: Teams Post
+//Nur Alert erstellen und in 2 Wochen CheckIn, währenddessen regelmäßig Anzahl prüfen
+
+
+let CountEvents = IdentityLogonEvents
+| where FailureReason == "AccountLocked"
+| where TimeGenerated >= ago(1d)
+| summarize LockedOnDevice = count_distinct(AccountName) by DeviceName 
+| summarize sum(LockedOnDevice);
+IdentityLogonEvents
+| where FailureReason == "AccountLocked"
+| where TimeGenerated >= ago(1d)
+| summarize LockedOnDevice = count_distinct(AccountName), make_set(AccountName) by DeviceName
+| where  toscalar(CountEvents) > 50
+
+//Name: Internal Identity - Locked Account - Too Many Accounts Locked
+//Severity: High
+//Handling: Eskalation -> RB
+//Info die gewünscht wäre: Quelle woher die Anmeldeversuche kamen
+//Entities DeviceName, Count, set_AccountName
+//SDM Playbook erstellen
+
+
+
+set query_now = datetime(2024-07-27T13:16:33.1859280Z);
+IdentityLogonEvents
+| where TimeGenerated >= ago(1h)
+| where DeviceName == "ts-dkv-113-w.egrima.internal"
+| where AccountName == "Stefan.Novac"
+| project TimeGenerated,AccountName,DeviceName,DestinationDeviceName,TargetDeviceName, Application, FailureReason, Protocol
