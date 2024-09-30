@@ -7,7 +7,7 @@ SigninLogs
         CAPName = tostring(CAP.displayName),
         SessionControls = tostring(CAP.enforcedSessionControls)
 )
-| where Result !in ("success","notEnabled","notApplied","reportOnlySuccess","reportOnlyNotApplied","unknownFutureValue")
+| where Result !in ("success","notEnabled","notApplied","reportOnlySuccess","reportOnlyNotApplied","unknownFutureValue","reportOnlyFailure")
 | mv-apply Status on ( 
     project StatusErrorCode = tostring(Status.errorCode),
         StatusAdditionalDetails = tostring(Status.additionalDetails)
