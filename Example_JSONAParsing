@@ -1,0 +1,21 @@
+SecurityAlert
+| where TimeGenerated >= ago(90d)
+| where AlertName contains "TI Map"
+| mv-apply ent = todynamic(Entities) on (
+    extend Type2 = ent.Type
+    | where Type2 == "ip"
+    )
+
+SecurityAlert
+| where TimeGenerated >= ago(90d)
+| where AlertName contains "TI Map"
+| mv-expand todynamic(Entities)
+| extend Type2 = tostring(Entities.Type)
+| extend Address = tostring(Entities.Address)
+| where Type2 == "ip"
+| extend GeoIPInfo = geo_info_from_ip_address(Address)
+| extend country = tostring(parse_json(GeoIPInfo).country), 
+    state = tostring(parse_json(GeoIPInfo).state), 
+    city = tostring(parse_json(GeoIPInfo).city), 
+    latitude = tostring(parse_json(GeoIPInfo).latitude), 
+    longitude = tostring(parse_json(GeoIPInfo).longitude)
