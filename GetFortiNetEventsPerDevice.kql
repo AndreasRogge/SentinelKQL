@@ -4,3 +4,53 @@ CommonSecurityLog
 | extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
 | summarize count() by bin(TimeGenerated, 1h), DeviceName
 | render timechart 
+
+
+//AdditionalExtensions parsen
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| where ipv4_is_private(SourceIP) == true and ipv4_is_private(DestinationIP) == false
+| parse-kv AdditionalExtensions as (srccountry:string, logid:int, start:datetime) with (pair_delimiter=";", kv_delimiter="=")
+
+//Traffic IN to IN --> Auxiliary Log
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| where ipv4_is_private(SourceIP) == true and ipv4_is_private(DestinationIP) == true
+//| summarize count() by Activity, DeviceAction
+//| where DeviceCustomString6 == "VPN_SSO_AUTH_GROUP"
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize SizeInMB = sum(datasize)/1000/1000 by bin(TimeGenerated, 1h)
+
+//Traffic IN to OUT --> Analytic Log (pass rauswerfen)
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| where ipv4_is_private(SourceIP) == true and ipv4_is_private(DestinationIP) == false
+//| summarize count() by Activity, DeviceAction
+| where Activity contains "dns"
+
+//DNS Matching ggf. wenig Daten parsen und nutzen um gegen TI zu prüfen
+
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize sum(datasize)/1000/1000/1000 by bin(TimeGenerated, 1h)
+
+
+//Traffic OUT to IN --> Auxiliary Log
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| where ipv4_is_private(SourceIP) == false and ipv4_is_private(DestinationIP) == true
+//| summarize count() by Activity, DeviceAction
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize SizeInMB = sum(datasize)/1000/1000 by bin(TimeGenerated, 1h)
+
+| where DeviceAction contains "block"
+
+| summarize count() by bin(TimeGenerated, 1h), DeviceName
+| render timechart 
