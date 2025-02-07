@@ -1,0 +1,6 @@
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| summarize count() by bin(TimeGenerated, 1h), DeviceName
+| render timechart 

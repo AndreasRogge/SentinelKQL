@@ -8,3 +8,22 @@ union *
 | project Type, billable = _IsBillable, datasize =_BilledSize 
 | summarize totalentries = count(), sum(datasize) by Type, billable 
 | sort by sum_datasize 
+
+CommonSecurityLog
+| where TimeGenerated >= ago(90d)
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize Count = count(), Average = avg(datasize)
+
+let RetentionCostPerGbPerMonth = 0.126;
+let IngestionCostPerGb = 5.17;
+Usage
+| where TimeGenerated > ago(90d)
+| where DataType == "CommonSecurityLog"
+//| distinct QuantityUnit
+| summarize smb=sumif(Quantity, QuantityUnit == "MBytes"), skb = sumif(Quantity, QuantityUnit == "KBytes"), count() by bin(TimeGenerated, 1d)
+| extend ["Total Ingestion (MB)"] = (smb + skb/1000)
+| extend ["Total Ingestion (GB)"] = ["Total Ingestion (MB)"]/1000
+| extend ["Ingestion Cost per Day"] = ["Total Ingestion (MB)"]/1000 * IngestionCostPerGb
+| project-away smb, skb
+//| summarize avg(["Total Ingestion (GB)"])
+//| distinct DataType, Solution
