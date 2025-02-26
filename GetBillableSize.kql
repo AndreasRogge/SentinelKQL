@@ -27,3 +27,32 @@ Usage
 | project-away smb, skb
 //| summarize avg(["Total Ingestion (GB)"])
 //| distinct DataType, Solution
+
+
+
+let AnalyticIngestionCostPerGb = 5.36;
+let BasicIngestionCostPerGb = 1.10;
+let AuxIngestionCostPerGb = 0.19;
+CommonSecurityLog
+| where TimeGenerated >= ago(30d)
+| extend policyName = tostring(extract("profile=(\\w+)[-]?(\\w+)", 0, AdditionalExtensions))
+| extend policyID = extract("policyid=(\\d+)", 1, AdditionalExtensions)
+| extend policyUUID = extract("poluuid=(\\d+)", 1, AdditionalExtensions)
+//| where ipv4_is_private(SourceIP) == true and ipv4_is_private(DestinationIP) == false
+//| where Activity contains "dns"
+//| where policyID == 111
+//| where SimplifiedDeviceAction contains "block"
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize DatenProHInGB = sum(datasize)/1000/1000/1000 by bin(TimeGenerated, 1h)
+| summarize AvgDatenProHInGB = avg(DatenProHInGB)
+//| extend CostPerDay = AvgDatenProHInGB*24*AnalyticIngestionCostPerGb
+| extend AnalyticCostPerMonth = round(AvgDatenProHInGB*24*AnalyticIngestionCostPerGb*30,2)
+| extend BasicCostPerMonth = round(AvgDatenProHInGB*24*BasicIngestionCostPerGb*30,2)
+| extend AuxCostPerMonth = round(AvgDatenProHInGB*24*AuxIngestionCostPerGb*30,2)
+| project-reorder AnalyticCostPerMonth, BasicCostPerMonth, AuxCostPerMonth, AvgDatenProHInGB
+// where policyID == 111
+//| summarize count() by Activity, DeviceAction
+
+//| where DeviceAction contains "block"
+| project Type, billable = _IsBillable, datasize =_BilledSize, TimeGenerated
+| summarize sum(datasize)/1000/1000/1000 by bin(TimeGenerated, 1h)
