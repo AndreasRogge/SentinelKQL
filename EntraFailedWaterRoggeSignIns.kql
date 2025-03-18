@@ -13,3 +13,16 @@ SigninLogs
         StatusAdditionalDetails = tostring(Status.additionalDetails)
 )
 | project UserPrincipalName, Result, CAPName, SessionControls, StatusErrorCode, StatusAdditionalDetails
+
+
+SigninLogs
+| where UserId == "[OBJETID]"
+| extend errorCode = Status.errorCode, 
+         additionalDetails = Status.additionalDetails, 
+         failureReason = Status.failureReason
+| mv-expand ConditionalAccessPolicies
+| extend CAPDisplayName = tostring(ConditionalAccessPolicies.displayName),
+         CAPResult = tostring(ConditionalAccessPolicies.result),
+         CAPSessionControls = tostring(ConditionalAccessPolicies.enforcedSessionControls)
+| where CAPResult !in ("success","notEnabled","notApplied","reportOnlySuccess","reportOnlyNotApplied","unknownFutureValue","reportOnlyFailure")
+| project TimeGenerated, UserPrincipalName, CAPDisplayName, CAPResult, CAPSessionControls, errorCode, additionalDetails, failureReason
