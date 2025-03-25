@@ -1,0 +1,16 @@
+SecurityIncident
+| where TimeGenerated >= ago(30d)
+| summarize arg_max(TimeGenerated, *) by IncidentNumber
+| extend Title = trim_end(@" (on one endpoint|on multiple endpoints|involving one user|involving multiple users|involving multiple users reported by multiple sources|reported by multiple sources)", Title)
+| extend Title = trim_end(@" (on one endpoint|on multiple endpoints|involving one user|involving multiple users|involving multiple users reported by multiple sources|reported by multiple sources)", Title)
+| extend Title = trim_end(@" (on one endpoint|on multiple endpoints|involving one user|involving multiple users|involving multiple users reported by multiple sources|reported by multiple sources)", Title)
+| extend APN = tostring(parse_json(AdditionalData.alertProductNames))
+| summarize
+    Count = count(),
+    APN = make_set(APN),
+    Classifications = make_set(Classification),
+    Severities = make_set(Severity)
+    by Title
+| project-reorder Count, Title, APN, Classifications, Severities
+| sort by Count desc
+ 
