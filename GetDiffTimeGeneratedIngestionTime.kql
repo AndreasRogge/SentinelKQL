@@ -1,0 +1,9 @@
+AzureMetrics
+| extend ingestionTime = ingestion_time()
+| extend Diff = ingestionTime - TimeGenerated
+| order by Diff desc
+| summarize (P5, P10, P25, Median, P75, P85, P90, P95, P99)=percentiles(Diff, 5, 10, 25, 50, 75, 85, 90, 95, 99), 
+     Min=min(Diff), 
+     Max=max(Diff), 
+     Average=avg(Diff), 
+     TotalEvents=count()
