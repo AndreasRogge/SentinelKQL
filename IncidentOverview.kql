@@ -14,3 +14,10 @@ SecurityIncident
 | project-reorder Count, Title, APN, Classifications, Severities
 | sort by Count desc
  
+
+ SecurityIncident
+| where TimeGenerated between (ago(30d) .. now())
+| where Title contains "Attempt to bypass cond"
+| make-series Incidents = dcount(IncidentNumber) default=0
+    on TimeGenerated from startofday(ago(30d)) to startofday(now()) step 1d
+| render timechart

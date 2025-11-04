@@ -1,0 +1,8 @@
+CommonSecurityLog
+| where TimeGenerated >= ago(4h)
+| summarize count(), Size = sum(_BilledSize) by bin(TimeGenerated, 1m)
+| extend counttemp =count_ / 60
+| summarize 
+    ['Maximum eps']=avg(counttemp) by bin(TimeGenerated,1m)
+| order by TimeGenerated asc
+| render timechart 
