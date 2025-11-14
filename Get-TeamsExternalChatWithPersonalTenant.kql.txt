@@ -1,0 +1,15 @@
+ CloudAppEvents
+ | where Timestamp >= ago(30d)
+ //| where AccountId =~ "Frank.Riesselmann@Cargobull.com" or AccountDisplayName contains "Riesselmann"
+    | where Application == "Microsoft Teams"
+    | where ActionType == "ChatCreated"
+    | where tostring(RawEventData.CommunicationType) == "OneOnOne"
+    | extend Raw = tostring(parse_json(RawEventData))
+    | extend Members = tostring(parse_json(Raw).Members)
+        | extend ResourceTenantId = tostring(parse_json(Raw).ResourceTenantId)
+        // Extract domain from AccountId
+   | extend ExternalDomain_1 = tolower(tostring(split(AccountId, '@')[1]))
+   //| where Members contains "Frank.Riesselmann@Cargobull.com"
+   | where ResourceTenantId == "00000000-0000-0000-0000-000000000000"
+   | summarize count() by bin(Timestamp, 1d)
+   | render timechart
